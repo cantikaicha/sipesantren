@@ -5,12 +5,14 @@ class UserState {
   final String? userRole;
   final String? userName;
   final bool isLoggedIn;
+  final bool isLoadingSession; // New field
 
   UserState({
     this.userId,
     this.userRole,
     this.userName,
     this.isLoggedIn = false,
+    this.isLoadingSession = true, // Default to true
   });
 
   UserState copyWith({
@@ -18,12 +20,14 @@ class UserState {
     String? userRole,
     String? userName,
     bool? isLoggedIn,
+    bool? isLoadingSession, // New field
   }) {
     return UserState(
       userId: userId ?? this.userId,
       userRole: userRole ?? this.userRole,
       userName: userName ?? this.userName,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+      isLoadingSession: isLoadingSession ?? this.isLoadingSession, // New field
     );
   }
 }
@@ -41,10 +45,15 @@ class UserNotifier extends StateNotifier<UserState> {
       userRole: role,
       userName: name,
       isLoggedIn: true,
+      isLoadingSession: false, // Session check completed
     );
   }
 
   void logout() {
-    state = UserState(); // Reset to default state
+    state = UserState(isLoadingSession: false); // Reset to default state, session check completed
+  }
+
+  void sessionCheckCompleted() {
+    state = state.copyWith(isLoadingSession: false);
   }
 }

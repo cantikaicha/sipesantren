@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
+import 'package:sipesantren/firebase_services.dart'; // New import for firestoreProvider
 import '../models/penilaian_model.dart';
 
 class PenilaianRepository {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+
+  PenilaianRepository({FirebaseFirestore? firestore}) : _db = firestore ?? FirebaseFirestore.instance;
 
   // --- Tahfidz ---
   Future<void> addPenilaianTahfidz(PenilaianTahfidz data) async {
@@ -54,3 +58,5 @@ class PenilaianRepository {
         .map((s) => s.docs.map((d) => Kehadiran.fromFirestore(d)).toList());
   }
 }
+
+final penilaianRepositoryProvider = Provider((ref) => PenilaianRepository(firestore: ref.watch(firestoreProvider)));

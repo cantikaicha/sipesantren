@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 import 'package:sipesantren/core/models/mapel_model.dart';
 import 'package:sipesantren/core/repositories/mapel_repository.dart';
 import 'package:sipesantren/features/master_data/presentation/mapel_form_page.dart';
 
-class MapelListPage extends StatefulWidget {
+class MapelListPage extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
   const MapelListPage({super.key});
 
   @override
-  State<MapelListPage> createState() => _MapelListPageState();
+  ConsumerState<MapelListPage> createState() => _MapelListPageState(); // Changed to ConsumerState
 }
 
-class _MapelListPageState extends State<MapelListPage> {
-  final MapelRepository _repository = MapelRepository();
+class _MapelListPageState extends ConsumerState<MapelListPage> { // Changed to ConsumerState
+  // Removed direct instantiation, now obtained from provider
 
   @override
   Widget build(BuildContext context) {
+    final _repository = ref.read(mapelRepositoryProvider); // Get from provider
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daftar Mata Pelajaran'),

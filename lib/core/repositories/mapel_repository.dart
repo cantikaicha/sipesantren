@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
+import 'package:sipesantren/firebase_services.dart'; // New import for firestoreProvider
 import 'package:sipesantren/core/models/mapel_model.dart';
 
 class MapelRepository {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+
+  MapelRepository({FirebaseFirestore? firestore}) : _db = firestore ?? FirebaseFirestore.instance;
 
   // Add a new Mapel
   Future<void> addMapel(MapelModel mapel) async {
@@ -25,3 +29,5 @@ class MapelRepository {
     await _db.collection('mapel').doc(mapelId).delete();
   }
 }
+
+final mapelRepositoryProvider = Provider((ref) => MapelRepository(firestore: ref.watch(firestoreProvider)));

@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 import 'package:sipesantren/core/models/mapel_model.dart';
 import 'package:sipesantren/core/repositories/mapel_repository.dart';
 
-class MapelFormPage extends StatefulWidget {
+class MapelFormPage extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
   final MapelModel? mapel; // Optional: if provided, it's an edit operation
 
   const MapelFormPage({super.key, this.mapel});
 
   @override
-  State<MapelFormPage> createState() => _MapelFormPageState();
+  ConsumerState<MapelFormPage> createState() => _MapelFormPageState(); // Changed to ConsumerState
 }
 
-class _MapelFormPageState extends State<MapelFormPage> {
+class _MapelFormPageState extends ConsumerState<MapelFormPage> { // Changed to ConsumerState
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final MapelRepository _repository = MapelRepository();
+  // Removed direct instantiation, now obtained from provider
   bool _isLoading = false;
 
   @override
@@ -32,6 +33,7 @@ class _MapelFormPageState extends State<MapelFormPage> {
   }
 
   Future<void> _saveMapel() async {
+    final _repository = ref.read(mapelRepositoryProvider); // Get from provider
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;

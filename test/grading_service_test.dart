@@ -1,10 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sipesantren/core/services/grading_service.dart';
 import 'package:sipesantren/core/models/penilaian_model.dart';
+import 'package:sipesantren/core/models/weight_config_model.dart'; // New import
 
 void main() {
   group('GradingService Tests', () {
     final service = GradingService();
+
+    // Create a default WeightConfigModel for testing
+    final defaultWeights = WeightConfigModel(
+      id: 'test_weights',
+      tahfidz: 0.30,
+      fiqh: 0.20,
+      bahasaArab: 0.20,
+      akhlak: 0.20,
+      kehadiran: 0.10,
+    );
 
     test('calculateTahfidz returns correct average', () {
       final list = [
@@ -50,6 +61,7 @@ void main() {
         bahasaArab: 78,
         akhlak: 94,
         kehadiran: 90,
+        weights: defaultWeights, // Pass the default weights
       );
       // 0.3*93 = 27.9
       // 0.2*86 = 17.2

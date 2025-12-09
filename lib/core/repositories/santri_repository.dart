@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
+import 'package:sipesantren/firebase_services.dart'; // New import for firestoreProvider
 import '../models/santri_model.dart';
 
 class SantriRepository {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
   final String _collection = 'santri';
+
+  // Modified constructor to allow injecting FirebaseFirestore for testing
+  SantriRepository({FirebaseFirestore? firestore}) : _db = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<SantriModel>> getSantriList() {
     return _db.collection(_collection).orderBy('nama').snapshots().map((snapshot) {
@@ -23,3 +28,5 @@ class SantriRepository {
     await _db.collection(_collection).doc(id).delete();
   }
 }
+
+final santriRepositoryProvider = Provider((ref) => SantriRepository(firestore: ref.watch(firestoreProvider)));

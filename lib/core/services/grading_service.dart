@@ -1,4 +1,5 @@
 import '../models/penilaian_model.dart';
+import '../models/weight_config_model.dart'; // New import
 
 class GradingService {
   double calculateTahfidz(List<PenilaianTahfidz> list) {
@@ -51,13 +52,13 @@ class GradingService {
     required double bahasaArab,
     required double akhlak,
     required double kehadiran,
+    required WeightConfigModel weights, // New parameter
   }) {
-    // Bobot: Tahfidz 30%, Fiqh 20%, Bahasa Arab 20%, Akhlak 20%, Kehadiran 10%
-    double finalScore = (0.30 * tahfidz) +
-        (0.20 * fiqh) +
-        (0.20 * bahasaArab) +
-        (0.20 * akhlak) +
-        (0.10 * kehadiran);
+    double finalScore = (weights.tahfidz * tahfidz) +
+        (weights.fiqh * fiqh) +
+        (weights.bahasaArab * bahasaArab) +
+        (weights.akhlak * akhlak) +
+        (weights.kehadiran * kehadiran);
     
     finalScore = finalScore.roundToDouble();
 

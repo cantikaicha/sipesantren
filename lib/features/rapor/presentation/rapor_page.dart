@@ -1,6 +1,7 @@
 import 'dart:io'; // New import for File
 import 'dart:typed_data'; // New import for Uint8List
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -10,22 +11,26 @@ import 'package:sipesantren/core/repositories/penilaian_repository.dart';
 import 'package:sipesantren/core/services/grading_service.dart';
 import 'package:share_plus/share_plus.dart'; // New import
 import 'package:path_provider/path_provider.dart'; // New import
+import 'package:sipesantren/core/models/weight_config_model.dart'; // New import
+import 'package:sipesantren/core/repositories/weight_config_repository.dart'; // New import
 
-class RaporPage extends StatefulWidget {
+class RaporPage extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
   final SantriModel? santri;
   const RaporPage({super.key, this.santri});
 
   @override
-  State<RaporPage> createState() => _RaporPageState();
+  ConsumerState<RaporPage> createState() => _RaporPageState(); // Changed to ConsumerState
 }
 
-class _RaporPageState extends State<RaporPage> {
-  final PenilaianRepository _repository = PenilaianRepository();
+class _RaporPageState extends ConsumerState<RaporPage> { // Changed to ConsumerState
+  // Removed direct instantiation, now obtained from provider
   final GradingService _gradingService = GradingService();
+  // Removed direct instantiation, now obtained from provider
 
   Map<String, double> _scores = {};
   Map<String, dynamic> _finalGrade = {};
-  String _akhlakCatatan = ''; // New state variable
+  String _akhlakCatatan = '';
+  WeightConfigModel? _weights; // New
   bool _loading = true;
 
   @override
@@ -38,7 +43,12 @@ class _RaporPageState extends State<RaporPage> {
 
   Future<void> _loadData() async {
     final santriId = widget.santri!.id;
-    
+    final _repository = ref.read(penilaianRepositoryProvider); // Get from provider
+    final _weightRepository = ref.read(weightConfigRepositoryProvider); // Get from provider
+    // Fetch weights first
+    await _weightRepository.initializeWeightConfig(); // Ensure default exists
+    _weights = await _weightRepository.getWeightConfig().first; // Synchronously get the first value
+
     // Fetch all data
     final tahfidzList = await _repository.getTahfidzBySantri(santriId).first;
     final mapelList = await _repository.getMapelBySantri(santriId).first;
@@ -68,6 +78,7 @@ class _RaporPageState extends State<RaporPage> {
       bahasaArab: bahasaArabScore,
       akhlak: akhlakScore,
       kehadiran: kehadiranScore,
+      weights: _weights!, // Pass the fetched weights
     );
 
     setState(() {
@@ -354,13 +365,13 @@ class _RaporPageState extends State<RaporPage> {
               pw.Text('Kamar: ${widget.santri!.kamar}'),
               pw.SizedBox(height: 30),
               
-pw.Table.fromTextArray(context: context, data: <List<String>>[
+              pw.Table.fromTextArray(context: context, data: <List<String>>[
                 <String>['Mata Pelajaran', 'Nilai', 'Bobot'],
-                <String>['Tahfidz', '${_scores['Tahfidz']}', '30%'],
-                <String>['Fiqh', '${_scores['Fiqh']}', '20%'],
-                <String>['Bahasa Arab', '${_scores['Bahasa Arab']}', '20%'],
-                <String>['Akhlak', '${_scores['Akhlak']}', '20%'],
-                <String>['Kehadiran', '${_scores['Kehadiran']}', '10%'],
+                <String>['Tahfidz', '${_scores['Tahfidz']}', '${(_weights!.tahfidz * 100).toStringAsFixed(0)}%'],
+                <String>['Fiqh', '${_scores['Fiqh']}', '${(_weights!.fiqh * 100).toStringAsFixed(0)}%'],
+                <String>['Bahasa Arab', '${_scores['Bahasa Arab']}', '${(_weights!.bahasaArab * 100).toStringAsFixed(0)}%'],
+                <String>['Akhlak', '${_scores['Akhlak']}', '${(_weights!.akhlak * 100).toStringAsFixed(0)}%'],
+                <String>['Kehadiran', '${_scores['Kehadiran']}', '${(_weights!.kehadiran * 100).toStringAsFixed(0)}%'],
               ]),
               
 pw.Divider(),

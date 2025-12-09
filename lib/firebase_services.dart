@@ -1,11 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 
+final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance); // New firestoreProvider
+final firebaseServicesProvider = Provider((ref) => FirebaseServices(firestore: ref.watch(firestoreProvider)));
 
 class FirebaseServices {
-  final FirebaseFirestore db = FirebaseFirestore.instance;
+  final FirebaseFirestore db;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  FirebaseServices({FirebaseFirestore? firestore}) : db = firestore ?? FirebaseFirestore.instance;
 
   Future<bool> createUser(
       String name, String email, String hashedPassword, String role) async {
@@ -124,10 +129,18 @@ class FirebaseServices {
   }
 
   Future<Map<String, String?>> getUserSession() async {
-    String? id = await _storage.read(key: 'user_id');
-    String? role = await _storage.read(key: 'user_role');
-    String? name = await _storage.read(key: 'user_name');
-    return {'id': id, 'role': role, 'name': name};
+    debugPrint("FirebaseServices: Attempting to get user session...");
+    try {
+      String? id = await _storage.read(key: 'user_id');
+      String? role = await _storage.read(key: 'user_role');
+      String? name = await _storage.read(key: 'user_name');
+      debugPrint("FirebaseServices: User session retrieved - ID: $id, Role: $role, Name: $name");
+      return {'id': id, 'role': role, 'name': name};
+    } catch (e) {
+      debugPrint("FirebaseServices: Error getting user session: $e");
+      // Return an empty map to ensure the Future completes and allows the app to proceed
+      return {'id': null, 'role': null, 'name': null};
+    }
   }
 
   Future<void> logout() async {

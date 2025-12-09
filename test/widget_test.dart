@@ -7,24 +7,36 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart'; // New import
+import 'package:firebase_core/firebase_core.dart'; // New import
 
 import 'package:sipesantren/main.dart';
+import 'package:sipesantren/firebase_services.dart'; // New import
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized(); // Required for Firebase
+    await Firebase.initializeApp(); // Initialize a default Firebase app
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('MyApp renders without errors', (WidgetTester tester) async {
+    final fakeFirestore = FakeFirebaseFirestore();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          firebaseServicesProvider.overrideWithValue(FirebaseServices(firestore: fakeFirestore)),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // For now, let's just make it pump successfully.
+    await tester.pumpAndSettle();
+
+    // The MyApp now shows a loading indicator first, then either SantriListPage or LoginPage
+    // based on session. Since this is a simple smoke test, let's verify it builds.
+    expect(find.byType(MyApp), findsOneWidget); 
   });
 }

@@ -15,6 +15,7 @@ import 'dart:math';
 import 'package:sipesantren/core/providers/user_provider.dart'; // New import
 import 'package:sipesantren/features/master_data/presentation/mapel_list_page.dart'; // New import
 import 'package:sipesantren/features/santri/presentation/santri_form_page.dart'; // New import
+import 'package:sipesantren/features/master_data/presentation/weight_config_page.dart'; // New import
 
 class SantriListPage extends ConsumerStatefulWidget {
   const SantriListPage({super.key});
@@ -24,7 +25,7 @@ class SantriListPage extends ConsumerStatefulWidget {
 }
 
 class _SantriListPageState extends ConsumerState<SantriListPage> {
-  final SantriRepository _repository = SantriRepository();
+  // Removed direct instantiation, now obtained from provider
   String _selectedKamar = 'Semua';
   String _selectedAngkatan = 'Semua';
   final TextEditingController _searchController = TextEditingController();
@@ -32,6 +33,8 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final _repository = ref.read(santriRepositoryProvider); // Get from provider
+    final _firestore = ref.watch(firestoreProvider); // Get from provider
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daftar Santri'),
@@ -39,7 +42,7 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
         foregroundColor: Colors.white,
         actions: [
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('santri').snapshots(),
+            stream: _firestore.collection('santri').snapshots(),
             builder: (context, snapshot) {
               bool hasPendingWrites = snapshot.hasData && snapshot.data!.metadata.hasPendingWrites;
               return IconButton(
@@ -82,10 +85,21 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
                 );
               },
             ),
+          if (ref.watch(userProvider).userRole == 'Admin') // Only for Admin
+            IconButton(
+              icon: const Icon(Icons.precision_manufacturing), // Icon for weights/settings
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WeightConfigPage()),
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseServices().logout();
+              final firebaseServices = ref.read(firebaseServicesProvider);
+              await firebaseServices.logout();
               if (context.mounted) {
                 ref.read(userProvider.notifier).logout(); // Update userProvider
                 Navigator.of(context).pushReplacement(
@@ -187,8 +201,8 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
 
           // Santri List
           Expanded(
-            child: StreamBuilder<List<SantriModel>>(
-              stream: _repository.getSantriList(),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('santri').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
@@ -197,8 +211,9 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final allSantri = snapshot.data!;
-                final filteredSantri = allSantri.where((santri) {
+                final allSantriDocs = snapshot.data!.docs;
+                final filteredSantri = allSantriDocs.where((doc) {
+                  final santri = SantriModel.fromFirestore(doc); // Create SantriModel for filtering
                   final matchesSearch = santri.nama.toLowerCase().contains(_searchQuery) || 
                                       santri.nis.contains(_searchQuery);
                   final matchesKamar = _selectedKamar == 'Semua' || santri.kamar == _selectedKamar;
@@ -213,7 +228,10 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
                 return ListView.builder(
                   itemCount: filteredSantri.length,
                   itemBuilder: (context, index) {
-                    final santri = filteredSantri[index];
+                    final doc = filteredSantri[index];
+                    final santri = SantriModel.fromFirestore(doc);
+                    final bool hasPendingWrites = doc.metadata.hasPendingWrites;
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: ListTile(
@@ -231,8 +249,14 @@ class _SantriListPageState extends ConsumerState<SantriListPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('NIS: ${santri.nis} | Kamar: ${santri.kamar}'),
-                            // Status sinkron omitted for now as Firestore handles it automatically
-                            // Or we could check metadata.hasPendingWrites if needed
+                            if (hasPendingWrites)
+                              const Row(
+                                children: [
+                                  Icon(Icons.cloud_upload, size: 16, color: Colors.orange),
+                                  SizedBox(width: 4),
+                                  Text('Menunggu sinkronisasi', style: TextStyle(color: Colors.orange, fontSize: 12)),
+                                ],
+                              ),
                           ],
                         ),
                       trailing: (ref.watch(userProvider).userRole != 'Wali Santri')
@@ -352,7 +376,7 @@ class SantriDetailPage extends ConsumerStatefulWidget {
 }
 
 class _SantriDetailPageState extends ConsumerState<SantriDetailPage> {
-  final PenilaianRepository _penilaianRepository = PenilaianRepository();
+  // Removed direct instantiation, now obtained from provider
   List<PenilaianTahfidz> _tahfidzData = [];
   bool _isLoading = true;
 
@@ -363,6 +387,7 @@ class _SantriDetailPageState extends ConsumerState<SantriDetailPage> {
   }
 
   Future<void> _loadTahfidzData() async {
+    final _penilaianRepository = ref.read(penilaianRepositoryProvider); // Get from provider
     _penilaianRepository.getTahfidzBySantri(widget.santri.id).listen((data) {
       setState(() {
         _tahfidzData = data;

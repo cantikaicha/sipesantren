@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 import 'package:sipesantren/core/models/santri_model.dart';
 import 'package:sipesantren/core/repositories/santri_repository.dart';
 
-class SantriFormPage extends StatefulWidget {
+class SantriFormPage extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
   final SantriModel? santri; // Optional: if provided, it's an edit operation
 
   const SantriFormPage({super.key, this.santri});
 
   @override
-  State<SantriFormPage> createState() => _SantriFormPageState();
+  ConsumerState<SantriFormPage> createState() => _SantriFormPageState(); // Changed to ConsumerState
 }
 
-class _SantriFormPageState extends State<SantriFormPage> {
+class _SantriFormPageState extends ConsumerState<SantriFormPage> { // Changed to ConsumerState
   final _formKey = GlobalKey<FormState>();
   final _nisController = TextEditingController();
   final _namaController = TextEditingController();
   final _kamarController = TextEditingController();
   final _angkatanController = TextEditingController();
-  final SantriRepository _repository = SantriRepository();
+  // Removed direct instantiation, now obtained from provider
   bool _isLoading = false;
 
   @override
@@ -41,6 +42,7 @@ class _SantriFormPageState extends State<SantriFormPage> {
   }
 
   Future<void> _saveSantri() async {
+    final _repository = ref.read(santriRepositoryProvider); // Get from provider
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;

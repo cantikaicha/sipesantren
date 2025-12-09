@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // New import
 import 'package:sipesantren/core/models/penilaian_model.dart';
 import 'package:sipesantren/core/models/santri_model.dart';
 import 'package:sipesantren/core/repositories/penilaian_repository.dart';
 import 'package:sipesantren/core/models/mapel_model.dart'; // New import
 import 'package:sipesantren/core/repositories/mapel_repository.dart'; // New import
 
-class InputPenilaianPage extends StatefulWidget {
+class InputPenilaianPage extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
   final SantriModel? santri; // Optional for standalone, but usually required
   const InputPenilaianPage({super.key, this.santri});
 
   @override
-  State<InputPenilaianPage> createState() => _InputPenilaianPageState();
+  ConsumerState<InputPenilaianPage> createState() => _InputPenilaianPageState(); // Changed to ConsumerState
 }
 
-class _InputPenilaianPageState extends State<InputPenilaianPage> {
+class _InputPenilaianPageState extends ConsumerState<InputPenilaianPage> { // Changed to ConsumerState
   int _selectedIndex = 0;
-  final PenilaianRepository _repository = PenilaianRepository();
-  final MapelRepository _mapelRepository = MapelRepository(); // New
+  // Removed direct instantiation, now obtained from provider
+  // Removed direct instantiation, now obtained from provider
   List<MapelModel> _mapelList = []; // New
   List<String> _jenisPenilaian = ['Tahfidz', 'Akhlak', 'Kehadiran']; // Modified
   int _mapelStartIndex = 0; // New: index where mapel items start in _jenisPenilaian
@@ -51,6 +52,7 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
   }
 
   Future<void> _loadMapelList() async {
+    final _mapelRepository = ref.read(mapelRepositoryProvider); // Get from provider
     _mapelRepository.getMapelList().listen((mapel) {
       setState(() {
         _mapelList = mapel;
@@ -78,6 +80,8 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
 
   @override
   Widget build(BuildContext context) {
+    final _repository = ref.read(penilaianRepositoryProvider); // Get from provider
+
     if (widget.santri == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Error')),
@@ -140,27 +144,29 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
   }
 
   Widget _buildFormByType() {
+    final _repository = ref.read(penilaianRepositoryProvider); // Get from provider
+
     // Check for Tahfidz (always at index 0)
     if (_selectedIndex == 0) {
-      return _buildTahfidzForm();
+      return _buildTahfidzForm(_repository);
     }
     // Check for dynamic Mapel
     if (_selectedIndex >= _mapelStartIndex && _selectedIndex < _mapelStartIndex + _mapelList.length) {
       final mapelName = _jenisPenilaian[_selectedIndex];
-      return _buildMapelForm(mapelName);
+      return _buildMapelForm(mapelName, _repository);
     }
     // Check for Akhlak (second to last)
     if (_selectedIndex == _jenisPenilaian.length - 2) {
-      return _buildAkhlakForm();
+      return _buildAkhlakForm(_repository);
     }
     // Check for Kehadiran (last)
     if (_selectedIndex == _jenisPenilaian.length - 1) {
-      return _buildKehadiranForm();
+      return _buildKehadiranForm(_repository);
     }
     return Container();
   }
 
-  Widget _buildTahfidzForm() {
+  Widget _buildTahfidzForm(PenilaianRepository _repository) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,7 +241,7 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
     );
   }
 
-  Widget _buildMapelForm(String mapel) {
+  Widget _buildMapelForm(String mapel, PenilaianRepository _repository) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -290,7 +296,7 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
     );
   }
 
-  Widget _buildAkhlakForm() {
+  Widget _buildAkhlakForm(PenilaianRepository _repository) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,7 +401,7 @@ class _InputPenilaianPageState extends State<InputPenilaianPage> {
     }
   }
 
-  Widget _buildKehadiranForm() {
+  Widget _buildKehadiranForm(PenilaianRepository _repository) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
