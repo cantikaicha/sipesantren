@@ -57,6 +57,7 @@ class _MyAppState extends ConsumerState<MyApp> { // Changed to ConsumerState
             session['name'] ?? 'User',
           );
     }
+    ref.read(userProvider.notifier).sessionCheckCompleted(); // Mark session check as complete
   }
 
   @override

@@ -2,12 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipesantren/features/dashboard/presentation/dashboard_page.dart';
-
 import 'package:sipesantren/core/providers/user_provider.dart';
-
-import 'package:sipesantren/features/santri/presentation/santri_list_page.dart';
 import 'package:sipesantren/firebase_services.dart';
-
 import 'register_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -27,9 +23,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final FirebaseServices db = FirebaseServices();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.fromSuccessRegistration) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registrasi berhasil! Silakan masuk.')),
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -37,38 +52,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             children: [
               const SizedBox(height: 80),
               // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: const Icon(Icons.mosque,
-                          size: 100, color: Colors.black),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'e-Penilaian Santri',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Mahad Sunan Ampel Al-Aly',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+              Column(
+                children: [
+                  Icon(Icons.mosque, size: 80, color: Theme.of(context).colorScheme.primary), // Use primary color
+                  const SizedBox(height: 20),
+                  Text(
+                    'e-Penilaian Santri',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Mahad Sunan Ampel Al-Aly',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
               ),
               const SizedBox(height: 40),
 
@@ -76,13 +78,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(15), // Softer corners
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.1),
                       blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      offset: const Offset(0, 3), // Softer shadow
                     ),
                   ],
                 ),
@@ -91,13 +93,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: Column(
                     children: [
                       // Email Field
-                      TextFormField(
+                      _LoginInputCard(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                        ),
+                        labelText: 'Email',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Email harus diisi';
@@ -108,17 +108,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(height: 16),
 
                       // Password Field
-                      TextFormField(
+                      _LoginInputCard(
                         controller: _passwordController,
+                        labelText: 'Kata Sandi',
+                        icon: Icons.lock,
                         obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
-                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Password harus diisi';
+                            return 'Kata sandi harus diisi';
                           }
                           return null;
                         },
@@ -130,7 +127,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () async {
+                          onPressed: loading ? null : () async { // Disable button when loading
                             if (_formKey.currentState!.validate()) {
                               setState(() {
                                 loading = true;
@@ -172,48 +169,53 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     loading = false;
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Login gagal. Periksa email dan password.')),
+                                    const SnackBar(content: Text('Login gagal. Periksa email dan kata sandi.')), // Translated
                                   );
                                 }
                               }
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor: Theme.of(context).colorScheme.primary, // Use primary color
+                            foregroundColor: Colors.white, // Text color
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10), // Consistent with admin buttons
                             ),
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: loading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()) : const Text(
-                            'MASUK',
-                            style: TextStyle(
-                              color: Colors.white,
+                          child: loading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(color: Colors.white), // White loading indicator
+                                )
+                              : const Text('Masuk'), // Translated
+                        ),
+                      ),
+                      const SizedBox(height: 20), // Spacing
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton( // Changed to TextButton for a flatter look
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterPage(),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).colorScheme.primary, // Primary color for link
+                            textStyle: const TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: Center(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RegisterPage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'Belum punya akun? Daftar disini.',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                          child: const Text('Belum punya akun? Daftar disini.'), // Translated
                         ),
                       ),
                     ],
@@ -223,6 +225,58 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Helper widget for consistent input field styling
+class _LoginInputCard extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final IconData icon;
+  final String? Function(String?)? validator;
+  final bool obscureText;
+  final TextInputType keyboardType;
+
+  const _LoginInputCard({
+    required this.controller,
+    required this.labelText,
+    required this.icon,
+    this.validator,
+    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: labelText,
+          border: InputBorder.none, // Remove border from TextFormField itself
+          contentPadding: EdgeInsets.zero, // Remove default padding
+          prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
+          prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
+        ),
+        validator: validator,
       ),
     );
   }

@@ -105,7 +105,14 @@ class FirebaseServices {
   }
 
   Future<void> logout() async {
-    await _storage.deleteAll();
+    debugPrint("FirebaseServices: Attempting to clear session keys explicitly...");
+    await _storage.delete(key: 'user_id');
+    await _storage.delete(key: 'user_role');
+    await _storage.delete(key: 'user_name');
+
+    debugPrint("FirebaseServices: Explicit key deletion completed. Verifying contents...");
+    String? id = await _storage.read(key: 'user_id');
+    debugPrint("FirebaseServices: After explicit delete, user_id is: $id");
   }
 
   // Stream all users
