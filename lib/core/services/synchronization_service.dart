@@ -1,19 +1,21 @@
 // lib/core/services/synchronization_service.dart
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // Added import
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart'; 
 import 'package:sipesantren/core/repositories/santri_repository.dart';
 import 'package:sipesantren/core/repositories/penilaian_repository.dart';
+import 'package:sipesantren/core/repositories/mapel_repository.dart'; // Added
 
 class SynchronizationService {
   final SantriRepository _santriRepository;
   final PenilaianRepository _penilaianRepository;
+  final MapelRepository _mapelRepository; // Added
   final Connectivity _connectivity;
   StreamSubscription? _connectivitySubscription;
   Timer? _syncTimer;
 
-  SynchronizationService(this._santriRepository, this._penilaianRepository, this._connectivity) {
+  SynchronizationService(this._santriRepository, this._penilaianRepository, this._mapelRepository, this._connectivity) {
     _startListeningToConnectivity();
   }
 
@@ -33,8 +35,14 @@ class SynchronizationService {
 
   void _triggerSync() async {
     debugPrint("Triggering sync...");
+    // 1. Push Local Changes
     await _santriRepository.syncPendingChanges();
     await _penilaianRepository.syncPendingChanges();
+    await _mapelRepository.syncPendingChanges();
+    
+    // 2. Pull Remote Changes
+    await _santriRepository.fetchFromFirestore();
+    await _mapelRepository.fetchFromFirestore();
   }
 
   void _startPeriodicSync() {
@@ -61,8 +69,9 @@ final connectivityProvider = Provider((ref) => Connectivity());
 final synchronizationServiceProvider = Provider((ref) {
   final santriRepo = ref.watch(santriRepositoryProvider);
   final penilaianRepo = ref.watch(penilaianRepositoryProvider);
+  final mapelRepo = ref.watch(mapelRepositoryProvider); // Added
   final connectivity = ref.watch(connectivityProvider);
-  final service = SynchronizationService(santriRepo, penilaianRepo, connectivity);
+  final service = SynchronizationService(santriRepo, penilaianRepo, mapelRepo, connectivity);
   ref.onDispose(() => service.dispose());
   return service;
 });

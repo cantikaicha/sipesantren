@@ -25,7 +25,7 @@ class DatabaseHelper {
     String databasePath = join(path, 'sipesantren.db');
     return await openDatabase(
       databasePath,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -99,16 +99,30 @@ class DatabaseHelper {
         syncStatus INTEGER DEFAULT 0
       )
     ''');
+
+    // Mapel Table
+    await db.execute('''
+      CREATE TABLE mapel(
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        syncStatus INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Seed default Mapel
+    await db.insert('mapel', {'id': 'mapel_fiqh', 'name': 'Fiqh', 'syncStatus': 1});
+    await db.insert('mapel', {'id': 'mapel_ba', 'name': 'Bahasa Arab', 'syncStatus': 1});
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+    if (oldVersion < 3) {
       // Simple migration: Drop all and recreate for development phase
       await db.execute('DROP TABLE IF EXISTS santri');
       await db.execute('DROP TABLE IF EXISTS penilaian_tahfidz');
       await db.execute('DROP TABLE IF EXISTS penilaian_mapel');
       await db.execute('DROP TABLE IF EXISTS penilaian_akhlak');
       await db.execute('DROP TABLE IF EXISTS kehadiran');
+      await db.execute('DROP TABLE IF EXISTS mapel');
       await _createTables(db);
     }
   }

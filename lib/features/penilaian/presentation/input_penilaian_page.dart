@@ -52,18 +52,19 @@ class _InputPenilaianPageState extends ConsumerState<InputPenilaianPage> { // Ch
   }
 
   Future<void> _loadMapelList() async {
-    final _mapelRepository = ref.read(mapelRepositoryProvider); // Get from provider
-    _mapelRepository.getMapelList().listen((mapel) {
+    final _mapelRepository = ref.read(mapelRepositoryProvider);
+    final mapel = await _mapelRepository.getMapelList();
+    if (mounted) {
       setState(() {
         _mapelList = mapel;
         _jenisPenilaian = ['Tahfidz'];
         for (var m in _mapelList) {
           _jenisPenilaian.add(m.name);
         }
-        _mapelStartIndex = _jenisPenilaian.length - _mapelList.length; // Index where mapel start
+        _mapelStartIndex = 1; // Tahfidz is 0, so mapel starts at 1
         _jenisPenilaian.addAll(['Akhlak', 'Kehadiran']);
       });
-    });
+    }
   }
 
   @override

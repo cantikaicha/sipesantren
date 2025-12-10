@@ -5,7 +5,8 @@ import 'package:sipesantren/features/admin/presentation/weight_config_page.dart'
 import 'package:sipesantren/features/admin/presentation/user_management_page.dart';
 import 'package:sipesantren/features/auth/presentation/login_page.dart';
 import 'package:sipesantren/features/santri/presentation/santri_list_page.dart';
-import 'package:sipesantren/firebase_services.dart'; // Added import
+import 'package:sipesantren/features/kelas/presentation/kelas_list_page.dart';
+import 'package:sipesantren/firebase_services.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -81,8 +82,18 @@ class DashboardPage extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               DashboardActionCard(
+                icon: Icons.class_,
+                title: 'Kelas',
+                subtitle: 'Absensi dan Penilaian per Kelas (Fiqh/B. Arab).',
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const KelasListPage()));
+                },
+              ),
+              const SizedBox(height: 10),
+              DashboardActionCard(
                 icon: Icons.score,
-                title: 'Input Nilai',
+                title: 'Input Nilai Individual',
                 subtitle: 'Masukkan dan perbarui nilai santri.',
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(
@@ -93,7 +104,7 @@ class DashboardPage extends ConsumerWidget {
           ),
         );
         break;
-      case 'Wali': // Updated from 'Wali Santri' to match registration
+      case 'Wali':
         bodyContent = SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -126,7 +137,6 @@ class DashboardPage extends ConsumerWidget {
         );
         break;
       default:
-        // Fallback for any other role
         bodyContent = SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -154,10 +164,9 @@ class DashboardPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Proper logout via provider
-              final firebaseServices = ref.read(firebaseServicesProvider); // Obtain service via provider
-              firebaseServices.logout(); // Call logout on service
-              ref.read(userProvider.notifier).logout(); // Update state
+              final firebaseServices = ref.read(firebaseServicesProvider);
+              firebaseServices.logout();
+              ref.read(userProvider.notifier).logout();
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LoginPage()),
               );
